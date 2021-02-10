@@ -1,0 +1,16 @@
+{
+    "rust-analyzer.cargo-watch.allTargets": false,
+    "rust-analyzer.cargo-watch.arguments": [
+        "--target",
+        "thumbv7em-none-eabihf"
+    ],
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.checkOnSave.extraArgs": [
+        "--target",
+        "thumbv7m-none-eabi"
+    ],
+    "editor.defaultFormatter": "matklad.rust-analyzer",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.renderWhitespace": "all"
+}
