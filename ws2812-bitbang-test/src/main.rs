@@ -4,8 +4,6 @@
 use cortex_m as cm;
 use cortex_m::Peripherals as cm_p;
 use defmt_rtt as _;
-use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
-//use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayUs;
 use hal::gpio::{Level, PushPull};
 use hal::pac::Peripherals as hal_p;
 use hal::prelude::OutputPin;
@@ -47,6 +45,9 @@ const T0L: u32 = 51;
 const T1L: u32 = 38;
 const RESET: u32 = 3200;
 const NUM_COLORS: usize = 4;
+//this subtracts approximately however many cycles happen between
+//calling the delay functions from the number of cycles to delay.
+const TIMING_COMPENSATION_OFFSET: u32 = 2;
 
 //this will send one byte of color data down the WS2811 IO line:
 fn send_byte(
@@ -62,22 +63,22 @@ fn send_byte(
                 if led.set_high().is_err() {
                     defmt::error!("The LED was not set high.");
                 }
-                delay_clock_cycles(T0H - 2, systick);
+                delay_clock_cycles(T0H - TIMING_COMPENSATION_OFFSET, systick);
                 if led.set_low().is_err() {
                     defmt::error!("The LED was not set low.");
                 }
-                delay_clock_cycles(T0L - 2, systick);
+                delay_clock_cycles(T0L - TIMING_COMPENSATION_OFFSET, systick);
             }
             1 => {
                 //send high bit timing
                 if led.set_high().is_err() {
                     defmt::error!("The LED was not set high.");
                 }
-                delay_clock_cycles(T1H - 2, systick);
+                delay_clock_cycles(T1H - TIMING_COMPENSATION_OFFSET, systick);
                 if led.set_low().is_err() {
                     defmt::error!("The LED was not set low.");
                 }
-                delay_clock_cycles(T1L - 2, systick);
+                delay_clock_cycles(T1L - TIMING_COMPENSATION_OFFSET, systick);
             }
             _ => {
                 defmt::error!("You managed to get a value other than 0 or 1 when doing a bitwise & with 0x01. WTF.");
@@ -156,7 +157,7 @@ fn main() -> ! {
         send_color_array(&color_array, &mut led, &mut systick);
         delay_clock_cycles(64_000_000, &mut systick);
     }
-    // defmt::info!("You failed to set an LED. Good work.");
+    defmt::info!("You got out of the loop, good work?");
     exit()
 }
 
