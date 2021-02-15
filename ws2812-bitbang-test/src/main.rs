@@ -39,20 +39,22 @@ struct Color {
 }
 
 //number of cycles for WS2812 timing:
-const T0H: u32 = 22;
-const T1H: u32 = 45;
-const T0L: u32 = 51;
-const T1L: u32 = 38;
-const RESET: u32 = 3200;
+//1 cycle at 64MHz is 15.625ns
+const T0H: u32 = 22; //should be 0.35us
+const T1H: u32 = 45; //should be 0.7us
+const T0L: u32 = 51; //should be 0.8us
+const T1L: u32 = 38; //should be 0.6us
+const RESET: u32 = 3200; //shuld be >50us
 const NUM_COLORS: usize = 4;
 //this subtracts approximately however many cycles happen between
 //calling the delay functions from the number of cycles to delay.
-const TIMING_COMPENSATION_OFFSET: u32 = 2;
+//accounts for logic timing. A bit sloppy, but it works well enough for the WS2812 strip I've got.
+const TIMING_COMPENSATION_OFFSET: u32 = 19;
 
 //this will send one byte of color data down the WS2811 IO line:
 fn send_byte(
     byte: u8,
-    led: &mut hal::gpio::p0::P0_04<hal::gpio::Output<PushPull>>,
+    led: &mut hal::gpio::p0::P0_03<hal::gpio::Output<PushPull>>,
     systick: &mut cm::peripheral::SYST,
 ) {
     for i in 0..8 {
@@ -90,7 +92,7 @@ fn send_byte(
 //this will send one Color (24-bits of color data) down the WS2811 IO line:
 fn send_color(
     color: &Color,
-    led: &mut hal::gpio::p0::P0_04<hal::gpio::Output<PushPull>>,
+    led: &mut hal::gpio::p0::P0_03<hal::gpio::Output<PushPull>>,
     systick: &mut cm::peripheral::SYST,
 ) {
     send_byte(color.g, led, systick);
@@ -101,7 +103,7 @@ fn send_color(
 //this will send an array of Colors down the WS2811 IO line and then send the reset signal:
 fn send_color_array(
     color_array: &[Color; NUM_COLORS],
-    led: &mut hal::gpio::p0::P0_04<hal::gpio::Output<PushPull>>,
+    led: &mut hal::gpio::p0::P0_03<hal::gpio::Output<PushPull>>,
     systick: &mut cm::peripheral::SYST,
 ) {
     //send all colors in order
@@ -152,7 +154,7 @@ fn main() -> ! {
     //get PORT0 for GPIO use:
     let port0 = hal::gpio::p0::Parts::new(hal_peripherals.P0);
     //set up pin p0_03 for WS2812 use:
-    let mut led = port0.p0_04.into_push_pull_output(Level::Low);
+    let mut led = port0.p0_03.into_push_pull_output(Level::Low);
     loop {
         send_color_array(&color_array, &mut led, &mut systick);
         delay_clock_cycles(64_000_000, &mut systick);
